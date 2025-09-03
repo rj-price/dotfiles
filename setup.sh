@@ -1,15 +1,42 @@
 # Aliases and functions
+eval "$(dircolors)"
+export LS_OPTIONS='--color=auto'
+alias ls='ls $LS_OPTIONS'
+alias lh='ls $LS_OPTIONS -lh'
+
 alias Q="date && squeue --user jnprice"
-alias lh="ls -lh"
 alias md="mkdir"
 alias rd="rmdir" 
-#alias ..="cd .."
-#alias ...="cd ../.."
+alias b="cd .."
+alias bb="cd ../.."
 alias duh='du -sh ./* ./.*' # Disk usage with human readable units, including hidden flies and not recursive
 alias untar='tar -xvzf' # Easy untar
+alias sjobacct='sacct --format=JobId,ReqMem,MaxRSS,AllocCPUS,TotalCPU,State,Elapsed --units=G'
+
+function QQ() {
+  date 
+  echo "$(squeue --user jnprice | awk 'NR > 1' | wc -l) jobs running..."
+  squeue --user jnprice
+  date >> ~/run_log.txt
+  squeue --user jnprice >> ~/run_log.txt
+  echo "" >> ~/run_log.txt
+}
 
 function mkcd() {
     mkdir -p "$1" && cd "$1"
+}
+
+function add2path() {
+  if ! echo "$PATH" | PATH=$(getconf PATH) grep -Eq '(^|:)'"${1:?missing argument}"'(:|\$)' ; then # Use the POSIX grep implementation
+    if [ -d "$1" ]; then # Don't add a non existing directory to the PATH
+      if [ "$2" = front ]; then # Use a standard shell test
+        PATH="$1:$PATH"
+      else
+        PATH="$PATH:$1"
+      fi
+      export PATH
+    fi
+  fi
 }
 
 ## Safety
@@ -39,6 +66,11 @@ function gupdate(){
   git pull $remote_name "$upstream_branch"
   git push
   gclean
+}
+
+# Easy tar.gz creation
+function easytar() {
+    tar -zcvf "$1".tar.gz "$1"
 }
 
 ## One command to extract them all
